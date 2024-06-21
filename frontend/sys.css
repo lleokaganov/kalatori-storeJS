@@ -1,0 +1,139 @@
+html{ height: 100%; width:100%; font-family: "comic sans ms"; line-height: 1.4em; }
+body { height: 100%; width:100%; font: 100% sans-serif, Helvetica, Arial, Verdana;
+margin: auto;
+color: #000000;
+word-wrap: break-word;
+}
+.no {display:none}
+.nobr {white-space: nowrap;}
+.mv { transition: transform 0.2s ease-in-out; }
+.mv:hover { transition-property: transform; transition-duration: 0.2s; animation: none; transform: scale(1.7); cursor:pointer;}
+.td { display:table }
+.mv0 { transition: transform 0.2s ease-in-out; }
+.mv0:hover { transition-property: transform; transition-duration: 0.2s; animation: none; transform: scale(1.1); cursor:pointer;}
+iframe, textarea, input, button, submit, select, video, object, embed {max-width: 99% !important;}
+.rama {margin-bottom:28px; border:1px solid #ccc; box-shadow:0px 15px 15px 15px rgba(0,0,0,0.6); border-radius: 7px 7px 7px 7px; padding: 15px 15px 15px 15px;}
+.ik { cursor:pointer; border: 1px solid red; box-shadow: 0px 15px 15px 15px rgba(0,0,0,0.6); border-radius: 7px 7px 7px 7px; padding: 15px 15px 15px 15px; }
+.t { border: 1px solid #330000; }
+.r { font-size: 12px; }
+.in { display: inline-block; }
+.l,.ll { cursor: pointer; color: blue; text-decoration: underline; } .ll,.il { display: inline; }
+.l:hover,.ll:hover { color: violet; }
+#bigfoto { box-sizing: border-box; }
+#bigfostr { width: 100% !important; }
+.br { font-size: 10px; }
+.search { font-weight: bold; color: black; background-color: rgb(255, 204, 0); }
+p.d {text-align:justify;text-indent:5%;margin-top:0pt;margin-bottom:0pt;}
+p.pd {text-align:justify;text-indent:5%;margin-top:2%;margin-bottom:0pt;}
+p.name {text-indent:0pt;margin-top:4%;margin-bottom:6%;text-align:center;font-weight:bold;font-size:150%;}
+p.podp {text-indent:0pt;margin-top:30pt;margin-bottom:12%;text-align:right;font-style:italic;}
+p.z {text-indent:0pt;margin-top:4%;margin-bottom:4%;text-align:center;font-weight:bold;font-size:100%;}
+p.epigraf {text-indent:0pt;text-align:justify;margin-top:10pt;margin-bottom:0pt;margin-right:4%;margin-left:60%;font-size:80%;}
+p.epigrafp {text-indent:0pt;text-align:right;margin-top:0pt;margin-bottom:4%;margin-right:4%;margin-left:60%;font-size:80%;font-style:italic;}
+
+#salert { z-index:200 !important; }
+LEGEND { font-weight: bold; color: #FF6200; font-size: 14px; text-align: left; }
+
+.q { clear:both; height:0; font-size: 1px; line-height: 0px; }
+.qTip {
+padding: 5px; border: 1px solid #666; border-right-width: 2px; border-bottom-width: 2px;
+background: #999; color: #FFF; font: bold 11px Verdana, Arial, sans-serif;
+text-align: left; position: absolute; z-index: 999999; max-width: 30%;
+}
+/* BLOKI */
+.thmbns {margin: -3em 0 0 -2em; text-align:center;}
+.thmbn {text-decoration:none; display:inline-block; vertical-align:top; text-align:left; margin:3em 0 0 2em;}
+.thmbn .rth {float:left;}
+U { text-decoration-style: wavy; text-decoration-color: orange; }
+
+TT { display:inline-block; max-width:1300px;font-family: monospace; word-wrap: anywhere; }
+.nobr { white-space: nowrap; }
+.rname { max-width:50px;}
+/******************** PASSWORD on/off **************************/
+
+.textbody { cursor: auto; }
+.pop4 { cursor:move;
+overflow:visible;
+top:100px;
+position:absolute;
+z-index:999;
+text-align:left;
+padding:16px 16px 16px 16px;
+margin:20px 20px 20px 10px;
+word-wrap: break-word;
+    background-color: rgb(255, 255, 255) !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    border-radius: 8px !important;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 4px 8px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+.pop4 TEXTAREA {width:100%;}
+.can4 { position:absolute; right:-5px;top:0px; width:32px; height:32px; cursor:pointer; font-size:30px; }
+.can4:before { content:'\2718'; } /* ✕ &#x2715; ✖ &#x2716; ✗ &#x2717; ✘ &#x2718; ✓ &#x2713; ✔ &#x2714; */
+.tenek { pointer-events:none; background:rgba(0,0,0,0.8);position:fixed;top:0;left:0;right:0;bottom:0; }
+
+.legend {
+  display: table;
+  overflow: hidden;
+  font-size: 14px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background-color: transparent;
+  font-weight: lighter;
+  color: black;
+  text-shadow: #888 3px 0 3px;
+  border: none;
+  border-radius: none;
+  font-size: 20px  !important;
+  padding: 0 10px 10px 10px;
+  margin: -10px auto 20px auto;
+}
+/* CSS для модального окна */
+.can4:hover { transform: rotate(90deg); }
+.can4 { right:0 !important; transition:transform .3s ease-out }
+/* animation */
+.izoomIn,.izoomOut,.ifadeIn,.ifadeOut { animation-duration: 0.4s; animation-timing-function: linear; }
+@keyframes izoomIn {
+  from { opacity: 0; transform: scale3d(0.3, 0.3, 0.3); }
+  50% { opacity: 1; }
+}
+.izoomIn { animation-name: izoomIn; /*opacity: 1; visibility: visible;*/ }
+@keyframes izoomOut {
+  from { opacity: 1; }
+  50% { opacity: 0; transform: scale3d(0.3, 0.3, 0.3); }
+  to { opacity: 0; }
+}
+.izoomOut { animation-name: izoomOut; /*opacity: 1; visibility: visible;*/ }
+@keyframes ifadeIn {
+    from { opacity: 0; visibility: hidden; }
+    to { opacity:1; visibility: visible; }
+}
+.ifadeIn { animation-name: ifadeIn; opacity: 1; visibility: visible; }
+@keyframes ifadeOut {
+    from { opacity: 1; visibility: visible; }
+    to { opacity:0; visibility: hidden; }
+}
+.ifadeOut { animation-name: ifadeOut; opacity: 0; visibility: hidden; }
+/************************************************/
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+A { text-decoration: none; color: #0E4394; }
+A:hover { text-decoration: none; color: brown; }
+HR {
+  background: linear-gradient(to right,white,#3D4852,white);
+  height: 1px;
+  border: 0;
+  margin-bottom: 10px;
+}
+
+@media (min-width: 850px) { /* big screens */
+    .logo-img { margin-top:0; }
+    .BC { margin: 0 3% 0 3%; }
+    p.z { font-size: 160%; text-indent: 5%; }
+    h1 { font-size: 2.2em; padding: 60px 40px 30px; }
+    .menu-icon { display: none; }
+    nav { position: relative; top: -22px; background-color: transparent; }
+    nav ul { max-height: 70px; padding: 15px 0; text-align: right; }
+    nav ul li { display: inline-flex; padding-left: 10px; }
+}

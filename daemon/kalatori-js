@@ -1,0 +1,12 @@
+#!/bin/bash
+
+clear
+
+cd /home/SHOP/kalatori-js
+
+export KALATORI_HOST="0.0.0.0:16736"
+export KALATORI_SEED="fuck woman men girl boy old young bear deer chicken bird fish every day"
+export KALATORI_DESTINATION="2sa1P8pU4Pa6JM2nyB2vcAQw9cCxttzpovAmCwcUHZ6UxET"
+export KALATORI_REMARK="DEBUG=true;"
+
+/usr/bin/node /home/SHOP/kalatori-js/daemon.js
