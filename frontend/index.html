@@ -13,18 +13,60 @@
 wintempl="<div id='{id}_body'>{s}</div><i id='{id}_close' title='Close' class='can4'></i>";
 wintempl_cls='pop4 zoomIn animated';
 
-SHOP_SETTINGS = {
-    currency: "DOT",
+SSSSHOP_SET = {
+    CUR_ALLOWED: "DOT ETH TON USDC USDT RUR USD EUR", // Alowed currency
+    CUR: "USD", // Price in base
     ipcountry: "FI",
 };
 
 </script>
-<script type="text/javascript" language="JavaScript" src="./main.js"></script>
-<script type="text/javascript" language="JavaScript" src="./SHOP.js"></script>
-<link rel="stylesheet" type="text/css" href="./shop.css">
-<link rel="stylesheet" type="text/css" href="./sys.css">
+<script type="text/javascript" language="JavaScript" src="./main.js?6"></script>
+<script type="text/javascript" language="JavaScript" src="./SHOP.js?8"></script>
+<link rel="stylesheet" type="text/css" href="./shop.css?2">
+<link rel="stylesheet" type="text/css" href="./sys.css?7">
 <meta http-equiv="Cache-Control" content="no-cache">
 </head>
 <body style="max-width: 1300px;">
-Loading...
+
+<nav class="menub">
+      <ul>
+
+        <li class="menup"><a href="#/">Customer</a>
+            <ul>
+                <li><a onclick='SHOP.ORDER.list();return false;'>My orders</a></li>
+                <li><a onclick='SHOP.ORDER.myCart();return false;'>My cart</a></li>
+                <li><a onclick='SHOP.unis_login();return false;'>My account</a></li>
+            </ul>
+	</li>
+
+        <li class="menup"><a href="#/">Saler</a>
+            <ul>
+                <li><a onclick='SHOP.SALER.sales();return false;'>My sales</a></li>
+                <li><a onclick='SHOP.SALER.items();return false;'>My items</a></li>
+                <li><a onclick='SHOP.SALER.shop();return false;'>My shop</a></li>
+                <li><a onclick='SHOP.SALER.all_salers();return false;'>All Salers</a></li>
+            </ul>
+	</li>
+
+        <li class="menup"><a href="#/" class='CUR'></a>
+            <ul class='CUR_LI'>
+                <!-- li><a href="#/">Orders</a></li>
+                <li><a href="#/">Settings</a></li -->
+            </ul>
+	</li>
+
+        <li><a class='shop_orders_tab mv0' onclick='SHOP.ORDER.list();return false;'>&#128203;</a></li>
+        <li><a class='shop_cart_img1 mv0' onclick='SHOP.myCart();return false;'>&#128722;&nbsp;<span class='shop_cart_n'></span></a></li>
+        <li><a class='mv0' onclick='SHOP.unis_login();return false;'>Login&nbsp;<span class='unis_login_flag'></span></a></li>
+      </ul>
+</nav>
+
+<br class='q'/>
+
+<div id='shop_place'>
+    <div style='width:100vw; height:80vh; text-align:center; vertical-align:middle; display:table-cell;'>
+    <img src='img/ajax.gif'>
+    </div>
+</div>
+
 </body></html>

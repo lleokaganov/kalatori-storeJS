@@ -1,8 +1,14 @@
+
+/* формы */
+.input_symb { position: absolute; top: 50%; left: 10px; transform: translateY(-50%); font-size: 23px; }
+.input_form { padding: 10px 10px 10px 30px; border: 1px solid #ccc; border-radius: 4px; }
+.input_btn { width: 80%; padding: 10px; background-color: #20c997; border: none; border-radius: 4px; color: #fff; font-size: 16px; cursor: pointer; margin-top: 10px; }
+
+
 .shop_tab_img { width: 120px; }
 
 #shop_place { position: relative; }
 
-.shop_cart_img1::before { content: 'Cart ' }
 
 .shop_cart_img {
     border: 1px solid #ccc;
@@ -18,6 +24,14 @@
     padding: 15px 15px 15px 15px;
 }
 
+
+
+/********************************************************************/
+.shop_orders_tab::before { content: 'Orders ' }
+.shop_cards_tab::before { content: 'Cart ' }
+
+.shop_cart_img1::before { content: 'Cart ' }
+
 .shop_orders_img::before { content: 'Orders ' }
 .shop_orders_img {
     border: 1px solid #ccc;
@@ -32,7 +46,7 @@
     border-radius: 7px 7px 7px 7px;
     padding: 15px 15px 15px 15px;
 }
-
+/********************************************************************/
 
 
 
@@ -194,4 +208,46 @@
 }
 
 .shop_delivery_address::before { content: 'Delivery address:' }
+
+
+
+
+/* === Горизонтальное выпадающее меню (усложненное) === */
+
+
+.menub ul { z-index:9999; }
+.menub li { background: #AFAFAF; border-radius: 4px; }
+
+/* Предотвращаем схлопывание */
+.menub:after { content: ''; display: table; clear: both; }
+.menub { border-radius: 4px; margin-bottom: 20px; padding: 2px 0; }
+
+
+/* === Разметка меню === */
+.menub ul { list-style: none; margin:0; padding:0; }
+.menub > ul > li { float: left; margin:0; padding:0; position:relative; }
+.menub > ul li a { display:block; margin:0; padding:6px 20px; text-decoration: none; }
+
+/*
+.menub > ul > li { transition: transform 0.2s ease-in-out; }
+.menub > ul > li:hover { transition-property: transform; transition-duration: 0.2s; animation: none; transform: scale(1.1); cursor:pointer;}
+*/
+
+/* === Оформление меню === */
+.menub > ul > li > a:hover { color: white; background: #000000E0; }
+.menub > ul a{ box-shadow: inset 0 15px 15px rgba(0, 0, 0, 0.3); color: black; cursor: default; border-radius: 4px; }
+
+/* === Оформление выпадающего подменю === */
+.menub > ul > li > ul > li > a:hover { background: #000000E0; color: #fff; }
+
+/* === Разметка выпадающего подменю === */
+
+.menub > ul > li > ul { display: block; position: absolute; left: -3000px; top: 100%; padding-top: 10px; min-width: 140px; opacity: 0; transition: opacity .5s; }
+.menub > ul > li > ul li a { white-space: nowrap; /* если не длинные заголовки*/ z-index: 9999; padding: 10px 20px;}
+
+.menub .menup:hover ul { left: 0px; opacity: 0.9; }
+
+/* Дополнительно. Разделители пунктов + маркер */
+.menub > ul > li + li > a { border-left: 1px solid rgba(255, 255, 255, 0.1); }
+.menub .menup > a:after { display: inline-block; padding: 4px 0 0 4px; content: "\25BC "; font-size: 10px; vertical-align: top; }
 

@@ -6,7 +6,7 @@ console.log("  |____/ \\__,_|\\___|_| |_| |_|\\___/|_| |_|  \\___/  |____/\n\n")
 
 // https://alzymologist.github.io/kalatori-api/
 
-VERSION = "2.05 Kalatori-JS";
+VERSION = "2.06 Kalatori-JS";
 
 // npm i @polkadot/api
 // npm install socket.io
@@ -27,33 +27,18 @@ m="http"; try { createServer = require(m).createServer; } catch(e) { mr.push(m);
 m="path"; try { parse = require(m).parse; } catch(e) { mr.push(m); }
 m="socket.io"; try { Server = require(m).Server; } catch(e) { mr.push(m); }
 DOT = require('./DOT.js');
-
-
-TMPBASE = {};
-
-// =============================================
-function cc(s){ return s.replace(/^\s*(.+?)\s*$/g,'$1'); }
-function boolOpt(s) {
-    var c=s.toLowerCase();
-    if(c=="yes" || c=="true" || c=="1" || c=="on") return 1;
-    if(c=="no" || c=="false" || c=="0" || c=="off") return 0;
-    return s;
-}
-// =============================================
-
-// const express = require('express');
-
 if(mr.length) {
   console.log("Please install required modules:");
   mr.forEach(x =>{console.log("   npm install "+x)});
   require('process').exit();
 }
 
-// ======================================================
+TMPBASE = {};
 
-
+// =============================================
+/*
 var supported_currencies={
-  'DOT-L': {
+  DOTL: {
     chain_name: "lleo-DOT",
     kind: "native",
     decimals: 10,
@@ -68,7 +53,7 @@ var supported_currencies={
     rpc_url: "wss://rpc.polkadot.io"
   },
 
-  'USDC-L': {
+  USDCL: {
     chain_name: "lleo-USDC",
     kind: "asset",
     asset_id: 1337,
@@ -93,7 +78,6 @@ var supported_currencies={
   },
 
 };
-
 var providers = {
   'Dwellir': 'wss://statemint-rpc.dwellir.com',
   'Dwellir Tunisia': 'wss://statemint-rpc-tn.dwellir.com',
@@ -120,13 +104,13 @@ var providers = {
     supported_currencies['USDC'].rpc_url = Value;
   }
   // delete providers[Key];
+*/
 
 document={
    getElementById: function() { return { innerHTML: "" }; },
    querySelector: function() { return { innerHTML: "" }; },
    querySelectorAll: function() { return []; },
 };
-
 
 DOT.noweb = 1; // веба у нас тут нету, подавить все веб-сообщения
 
@@ -154,11 +138,11 @@ DOT.D={
     //  var hash = await DOT.topUpFromAlice(pay_acc,DOT.chain.total_planks);
 
   pay_acc: function(order, CUR, destination) {
-    if(!destination) destination = DOT.daemon.destination;
+    if(!destination) destination = DOT.daemon.cf.destination;
 
    try {
     var keyring = new polkadotKeyring.Keyring({ type: 'sr25519' });
-    var pair = keyring.addFromMnemonic(DOT.daemon.seed)
+    var pair = keyring.addFromMnemonic(DOT.daemon.cf.seed)
       .derive("/"+destination)
       .derive("/"+order+CUR);
     var public = pair.publicKey;
@@ -172,7 +156,7 @@ DOT.D={
   },
 
   work: async function(pair, amount, order, CUR, destination) {
-    if(!destination) destination = DOT.daemon.destination;
+    if(!destination) destination = DOT.daemon.cf.destination;
     var pay_acc = pair.west;
     console.log("Work: "+pay_acc+" "+amount+" "+order+" "+CUR);
 
@@ -200,10 +184,10 @@ DOT.D={
       return { result: "waiting", balance: balance, amount: amount, CUR: CUR, destination: destination, order: order };
     }
 
-    var time = new Date().getTime();
+    var t = time();
     // ======== BaseTran ? =========
     if(TMPBASE[pay_acc]) {
-	var sec = (time-TMPBASE[pay_acc])/1000;
+	var sec = (t-TMPBASE[pay_acc])/1000;
 	if( sec < 30 ) {
 	    console.log("Transfer in progress: "+pay_acc);
 	    return {result: "paid", balance: balance, date: s[1], amount: s[2], CUR: s[3], destination: s[4], order: s[5], payment: "process"};
@@ -212,7 +196,7 @@ DOT.D={
 
     // Опа, оплата готова, начинаем трансфер
     console.log("Transfer starting: "+balance);
-    TMPBASE[pay_acc] = time; // засекли время (заново)
+    TMPBASE[pay_acc] = t; // засекли время (заново)
     var hash = false;
     try { hash = await DOT.D.transferAll(pair, destination, CUR); } catch(er) {}
 
@@ -232,7 +216,11 @@ DOT.D={
         var url = "https://lleo.me/bot/t.php?id=000000-FEEFAA&soft=kalatoriJS&message="
         +encodeURIComponent("Donate "+amount+" "+CUR+" from #"+order.split('_')[0]);
 	console.log(url);
-        fetch(url, { method: 'GET' });
+	try {
+	    fetch(url, { method: 'GET' });
+	} catch(er) {
+	    console.error("FEFE fetch error: ",er);
+	}
 
     s=s.split(' ');
     return {result: "paid", balance: balance, date: s[1], amount: s[2], CUR: s[3], hash: s[4], destination: s[5], order: s[6], payment: "new"};
@@ -262,48 +250,88 @@ DOT.D={
 
 console.log("Loading environment variables");
 
-DOT.daemon.server = process.env['KALATORI_HOST']; // "0.0.0.0:16726"
-DOT.daemon.seed = process.env['KALATORI_SEED']; // "bottom drive obey lake curtain smoke basket
-DOT.daemon.destination = process.env['KALATORI_DESTINATION']; // "0x7a8e3cbf653a65077179947e250892e579c8fb39167ec1ce26a4a6acbc5a0365"
-DOT.daemon.remark = process.env['KALATORI_REMARK'];
-// Settings
-DOT.daemon.SET={};
-DOT.daemon.remark.split(';').forEach(e=>{  var a=e.split('=',2); DOT.daemon.SET[cc(a[0])] = boolOpt( cc(a[1]) ); });
-DOT.daemon.start = DOT.date().replace('_',' ');
-"server seed destination remark".split(" ").forEach((v) => { console.log("\t"+v+" = "+DOT.daemon[v]); });
-DOT.nodes=supported_currencies;
 
+
+// =========================================================
+// L O A D    C O N F I G
+// const fs = require('fs');
+var nameconf = process.env['config'] || 'kalatori.conf';
+try { var txt = fs.readFileSync(nameconf,'utf8'); }
+catch(er) { console.log('Config not found: '+nameconf); require('process').exit(); }
+var se = DOT.daemon.cf = {nodes:{},start: DOT.date().replace('_',' ')};
+txt.split(/\r?\n/).forEach(s => {
+    s=s.replace(/\s*#.+$/g,''); // del # comments
+    if( m = s.match(/^\[(.+?)\]$/) ) se = DOT.daemon.cf.nodes[m[1]] = {};
+    else if( m = s.match(/^\s*(\w+)\s*=\s*(.+?)\s*$/i) ) {
+        if(m[1]=='url') { if(!se[m[1]]) se[m[1]]=[]; se[m[1]].push(m[2]); }
+        else se[m[1]]=(m[2]==''+(1*m[2])?1*m[2]:m[2]);
+    }
+});
+
+// DOT.daemon.server	= SET.HOST || process.env.KALATORI_HOST; // "0.0.0.0:16726"
+// DOT.daemon.seed		= SET.SEED || process.env.KALATORI_SEED; // "bottom drive obey lake curtain smoke basket
+// DOT.daemon.destination	= SET.DESTINATION || process.env.KALATORI_DESTINATION; // "0x7a8e3cbf653a65077179947e250892e579c8fb39167ec1ce26a4a6acbc5a0365"
+// DOT.daemon.remark	= SET.REMARK || process.env.KALATORI_REMARK;
+
+// Settings
+DOT.daemon.SET={}; DOT.daemon.cf.remark.split(';').forEach(e=>{ var a=e.split('=',2); DOT.daemon.SET[cc(a[0])] = boolOpt( cc(a[1]) ); });
+
+// console.log("Config: \n",DOT.daemon.cf);
+
+// =======================================================
+
+function select_next_rpc_url(CUR) {
+    var q = DOT.nodes[CUR];
+    if(q.url_n==undefined) q.url_n=Math.floor(Math.random()*q.url.length);
+    if(++q.url_n >= q.url.length) q.url_n = 0;
+    return q.rpc_url = q.url[q.url_n];
+}
+
+function get_node(CUR) {
+    var p={
+	chain_name: DOT.daemon.cf.nodes[CUR].chain_name,
+	decimals: DOT.daemon.cf.nodes[CUR].decimals,
+	rpc_url: DOT.daemon.cf.nodes[CUR].rpc_url,
+	asset_id:DOT.daemon.cf.nodes[CUR].asset_id,
+	kind:'asset',
+    };
+    if(!p.asset_id) p.kind='native';
+    return p;
+}
+
+// init DOT.nodes
+DOT.nodes = DOT.daemon.cf.nodes; // init from config
+console.log("Nodes:\n",DOT.nodes);
+
+// console.log("Config: \n",DOT.daemon.cf);
+// require('process').exit();
 // console.clear();
 
-function get_nodes(CUR) {
-  var N = Object.assign({}, DOT.nodes[CUR]);
-  N.api = (N.api ? true : false);
-  delete N.x2;
-  delete N.x3;
-  return N;
+async function check_nodes_connect() {
+    for(var CUR in DOT.nodes) {
+	if(!DOT.nodes[CUR].api) {
+	    select_next_rpc_url(CUR);// init random rpc_url
+	    process.stdout.write('... Connecting "'+CUR+'" '+DOT.nodes[CUR].rpc_url+" ");
+	    await DOT.chain_info(CUR);
+	    console.log( DOT.nodes[CUR].api ? colorText("connected", "green") : colorText("error", "red") );
+	} // else console.log(CUR+' OK');
+    }
 }
 
 (async () => { // Load all crypto
-    var k=0;
-    await cryptoWaitReady();
-    // await waitReady();
-    for(var CUR in DOT.nodes) {
-      console.log((++k)+') Connect "'+CUR+'"\t'+DOT.nodes[CUR].rpc_url);
-      await DOT.chain_info(CUR);
-      console.log(get_nodes(CUR));
-    }
-
-    console.log("Supporting currences "+k+": "+ Object.keys(DOT.nodes).join(", "));
+    await cryptoWaitReady(); // await waitReady();
+    await check_nodes_connect();
+    console.log("Supporting currences: "+ Object.keys(DOT.nodes).join(", "));
 })();
 
-
+setInterval(check_nodes_connect,5000);
 
 var server_info={
   version: VERSION,
   instance_id: "cunning-garbo",
   debug: true,
-  kalatori_remark: DOT.daemon.remark,
-  // recipient: DOT.daemon.destination,
+  kalatori_remark: DOT.daemon.cf.remark,
+  // recipient: DOT.daemon.cf.destination,
 };
 
 
@@ -315,7 +343,7 @@ const BasePaid = 'base_paid.txt';
 
 
 let app = express();
-const port = DOT.daemon.server.split(':')[1]; // "0.0.0.0:16726"// 3000;
+const port = DOT.daemon.cf.server.split(':')[1]; // "0.0.0.0:16726"// 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -346,7 +374,7 @@ app.post("/v2/order/*", async (req, res) => {
     var amount = 1*req.body.amount; // (in selected currency; not in Plancks) This parameter can be skipped on subsequent requests
     var CUR = req.body.currency; // Currency (human-readable ticker, one of the values listed in the /status::supported_currencies) If no currency is specified, but amount is present, server will return error 400.
 
-    var destination = ( DOT.daemon.SET['public'] && req.body.destination ? req.body.destination : DOT.daemon.destination);
+    var destination = ( DOT.daemon.SET['public'] && req.body.destination ? req.body.destination : DOT.daemon.cf.destination);
 
     console.log("\n------- Order: "+amount
     +" "+CUR
@@ -354,7 +382,7 @@ app.post("/v2/order/*", async (req, res) => {
     +" destination:"+destination
     +" -------\n");
 
-    // var currency_block = get_nodes(CUR);
+    // var currency_block = ///////get_nodes(CUR);
     // supported_currencies.find((v) => v.currency == currency);
 
     var callback = req.body.callback; // "Меньше всего нужны мне твои каллбэки" (с) Земфира
@@ -423,16 +451,8 @@ res.status(status).send(ara);
 //   |___/  \__|  \__,_|  \__|  \__,_| |___/
 //
 app.get("/v2/status", async (req, res) => {
-
     var nodes = {};
-    for(var CUR in DOT.nodes) {
-      var N = get_nodes(CUR);
-      if(N.api) {
-        delete N.api;
-        nodes[CUR]=N;
-      }
-    }
-
+    for(var CUR in DOT.nodes) { if(DOT.nodes[CUR].api) nodes[CUR]=get_node(CUR); }
     res.status(200).send({
       server_info: server_info,
       supported_currencies: nodes, // supported_currencies,
@@ -466,51 +486,12 @@ app.get("/reboot", async (req, res) => {
 app.get("/*", async (req, res) => {
   res.status(404).send("404 Error Request [kalatori-js open service]"
 	+"<p>FYI:"
-	+"<p>started: "+DOT.daemon.start
+	+"<p>started: "+DOT.daemon.cf.start
 	+"<p>codes: "+ Object.keys(DOT.nodes).join(', ')
 	+"<p>asset_hubs: "+DOT.nodes['USDC'].rpc_url
     );
 });
 
-
-/*
-OLD PROTOCOL v1.0 disabled
-
-app.get("/*", async (req, res) => {
-  console.log("\n--------------------------\nNew user: "+req.url);
-
-  var answer = {
-      wss: DOT.chain.wss,
-      version: VERSION,
-      recipient: DOT.daemon.destination,
-      symbol: DOT.chain.symbol,
-      deposit: DOT.chain.deposit,
-      fee_planks: DOT.chain.fee_planks,
-      ss58: DOT.chain.ss58,
-      mul: DOT.daemon.mulx,
-  };
-
-  // Error test
-  var url = req.url.split("/");
-  if(url[1]!='order'|| url[3]!='price'){
-    answer.error = "Invalid URL";
-    res.status(200).send(answer);
-    return;
-  }
-
-  answer.price = 1*url[4];
-  answer.order = url[2];
-  var pair = DOT.D.pay_acc(answer.order);
-  answer.pay_account = pair.west; // pub0x;
-
-  if(answer.price <= 0) answer.result = 'waiting';
-  else {
-    var r = await DOT.D.work(pair, answer.price, answer.order, CUR);
-    for(var i in r) answer[i] = r[i];
-  }
-  res.status(200).send(answer);
-});
-*/
 
 const httpServer = createServer(app);
 // httpServer.on('request', (req, res) => {
@@ -530,3 +511,24 @@ io.on("connection", (socket) => {
 httpServer.listen(port, () => {
   console.log(`Starting server: http://localhost:${port}\n\n`);
 });
+
+// =============================================
+function cc(s){ return s.replace(/^\s*(.+?)\s*$/g,'$1'); }
+function boolOpt(s) {
+    var c=s.toLowerCase();
+    if(c=="yes" || c=="true" || c=="1" || c=="on") return 1;
+    if(c=="no" || c=="false" || c=="0" || c=="off") return 0;
+    return s;
+}
+
+function time(){ return new Date().getTime(); };
+
+// Функция для изменения цвета текста
+const colorText = (text, color) => {
+    const colors = {
+        green: "\x1b[32m",
+        red: "\x1b[31m",
+        reset: "\x1b[0m"
+    };
+    return colors[color] + text + colors.reset;
+};

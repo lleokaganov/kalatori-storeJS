@@ -1,0 +1,5 @@
+#!/bin/sh
+
+clear
+cd /home/SERVICES/backend-jsshop
+/usr/bin/node server.js

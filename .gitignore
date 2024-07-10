@@ -14,3 +14,8 @@ Cargo.lock
 *.pdb
 
 gogit.sh
+
+backend/node_modules
+backend/ok
+backend/package.json
+backend/package-lock.json

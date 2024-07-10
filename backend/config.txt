@@ -1,23 +1,24 @@
 
 # backend port
-port=3000
+port=17717
 
 # salt for users logins
-unic_salt = FigliMigli
+# unic_salt = FigliMigli
+unic_salt = KrouliNouliG00li
 
 # shop currency
 CUR = DOT
 
 # allowed payment currency
-CUR_ALLOWED = DOT USDC USDT DOT-L USDC-L
+CUR_ALLOWED = DOT USDC USDT DOTL USDCL
 
 # daemon's url
 # DAEMON_URL = http://localhost:16726
 DAEMON_URL = https://kalatori-js.zymologia.fi
+#DAEMON_URL = https://kalatori-sl.zymologia.fi
 
 # Callback 1 - manually, 0 - background daemon callback (not supported yet)
 callback=1
 
 # Unique string, adding to order id
 STORE_NAME = Test JS Engine
-

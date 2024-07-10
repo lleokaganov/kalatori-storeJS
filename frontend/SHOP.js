@@ -1,13 +1,19 @@
 // Shop engine
 
 
-
-
-if(typeof(SHOP_SET)) SHOP_SET={
-    ipcountry: "US",
-    CUR: "DOT",
-    CUR_ALLOWED: "USDC-L DOT-L",
-    url: "http://10.1.1.7:3000/{action}",
+if(typeof(SHOP_SET)=='undefined') SHOP_SET={
+    ipcountry: "FI",
+//    CUR_ALLOWED: "DOT ETH TON USDC USDT RUR USD EUR DOTL USDCL", // Alowed currency
+    CUR_ALLOWED: "DOT ETH TON USDC USDT DOTL USDCL", // Alowed currency
+    CUR: "DOT", // Price in base
+//    CUR: "DOT",
+//    CUR_ALLOWED: "USDCL DOTL",
+//    url: "http://10.1.1.7:3000/{action}",
+url: "https://shop-js.zymologia.fi/{action}",
+    CURS: {
+	"USDCL":{"value":1,"name":"USDCL","char":"рџ’µ"},
+	"DOTL":{"value":6.35,"name":"PolkadotL","char":"рџ¤‘"},
+    },
     countries_txt: "./template/countries.txt",
 };
 
@@ -16,6 +22,67 @@ if(typeof(SHOP_SET)) SHOP_SET={
 page_onstart.push("SHOP.init()");
 
 SHOP={
+
+//          ____       _      _       _____   ____
+//         / ___|     / \    | |     | ____| |  _ \
+//         \___ \    / _ \   | |     |  _|   | |_) |
+//          ___) |  / ___ \  | |___  | |___  |  _ <
+//         |____/  /_/   \_\ |_____| |_____| |_| \_\
+//
+
+SALER: {
+
+ shop: async function(){ // SHOP.SALER.shop(); My shop
+	var shop = await SHOP.API('saler');
+
+    var name='shop_saler_shop', a = await new Promise((resolve) => {
+
+	ohelpc(name,'My Shop',
+	    mpers(`
+<form>
+<div>Name: <input class='input_form' name='name' placeholder="Store name" style='width:100%' type='text' value="{#name}"></div>
+<div>Description: <textarea name='about' placeholder="some strings\nabout your shop" class='input_form' style='width:100%;height:140px'>{#about}</textarea></div>
+<div>Accounts:
+<table border='0'>
+{for(CUR_ALLOWED):
+    <tr>
+	<td style='white-space:nowrap'>{CURS.{#item}.fullname}&nbsp;</td>
+	<td width='100%'><input class='input_form' type="text" placeholder='Public key for {#item} account' name="{#item}" style='width:100%' value="{#acc.{#item}}"></td>
+    </tr>
+}
+</table>
+</div>
+<center><button type="submit" class="input_btn mv0">Save</button></center>
+</form>
+`,{...shop, ...{CUR_ALLOWED: SHOP_SET.CUR_ALLOWED.split(' '),CURS: SHOP.CURS} })
+	);
+
+	dom(name).querySelector('button').onclick=function() { // Login
+	    var a = {acc:{}};
+	    var form = dom(name).querySelector('form').elements;
+	    for(var i=0;i<form.length;i++) { var x=form[i]; if(x.name && x.name!='') a[x.name]=x.value; }
+	    resolve(a);
+	    return false;
+	};
+
+     });
+
+    var res = await SHOP.API('saler_create',a);
+    if(res) clean(name);
+ },
+
+ sales: async function(){ // SHOP.SALER.sales(); My sales
+
+ },
+
+ items: async function(){ // SHOP.SALER.items(); My items
+
+ },
+
+ salers: async function(){ // SHOP.SALER.all_salers(); All Salers
+
+ },
+},
 
 //           ___    ____    ____    _____   ____
 //          / _ \  |  _ \  |  _ \  | ____| |  _ \
@@ -66,40 +133,40 @@ SHOP={
 }</table>
 `,
 
+
+
     list: async function() {
         var pp = await SHOP.API('orders');
-	if(!pp) return salert("You have no orders",1000);
+	if(!pp.length) return salert("You have no orders",1000);
 
-	// подгрузить все товары, о которых ещё нет локальной информации
-	var items={};
-	pp.forEach(p => { p.List.split('|').forEach(d=>{ d=1*d.split(':')[0]; if(!SHOP.ITEMS[d]) items[d]=1; }) });
-	items = Object.keys(items).join(',');
-	if(items!='') {
-	    // Подгрузить в SHOP.ITEMS недостающие
+	// РїРѕРґРіСЂСѓР·РёС‚СЊ РІСЃРµ С‚РѕРІР°СЂС‹, Рѕ РєРѕС‚РѕСЂС‹С… РµС‰С‘ РЅРµС‚ Р»РѕРєР°Р»СЊРЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРё
+	var items = [];
+	pp.forEach(p => {
+		const it = Object.keys(p.List).filter(key => !SHOP.ITEMS.hasOwnProperty(key));
+		items = [...new Set([...items, ...it])];
+	});
+	if(items.length!='') {
+	    // todo
+	    // РџРѕРґРіСЂСѓР·РёС‚СЊ РІ SHOP.ITEMS РЅРµРґРѕСЃС‚Р°СЋС‰РёРµ
+	     console.log("[ !!! ] need to load items: ",items);
 	}
 
-	// подгрузить все истории заказов
-	var events=[];
-	pp.forEach(p => { events.push(p.oid); });
+	// РїРѕРґРіСЂСѓР·РёС‚СЊ РІСЃРµ РёСЃС‚РѕСЂРёРё Р·Р°РєР°Р·РѕРІ
+	var events = pp.map(x => x._id);
         events = await SHOP.API('events',{oid: events.join(',')});
 	if(!events) return SHOP.error('Error events history');
 
-	// собрать
+	// СЃРѕР±СЂР°С‚СЊ
 	pp.forEach(p => {
-		// Расшифровать все товары
-		p.items=[];
-		p.List.split('|').forEach(d=>{
-		    var [id,quantity] = d.split(':');
-		    p.items.push({item:SHOP.ITEMS[id],quantity:quantity});
-		});
-		// Расшифровать все истории
-		p.events=[];
-		events.forEach(e => { if(p.oid==e.oid) p.events.push(e) });
-		// Расшифровать адрес
-		// надо ли?
+		// Р Р°СЃС€РёС„СЂРѕРІР°С‚СЊ РІСЃРµ С‚РѕРІР°СЂС‹
+		p.items=[]; for(var id in p.List) p.items.push({item:SHOP.ITEMS[id],quantity:p.List[id]});
+		// Р Р°СЃС€РёС„СЂРѕРІР°С‚СЊ РІСЃРµ РёСЃС‚РѕСЂРёРё
+		p.events=[]; events.forEach(e => { if(p._id==e.oid) p.events.push(e) });
+		// Р Р°СЃС€РёС„СЂРѕРІР°С‚СЊ Р°РґСЂРµСЃ
+		// РЅР°РґРѕ Р»Рё?
 	});
 
-	// Сортируем pp по новейшим событиям в истории:
+	// РЎРѕСЂС‚РёСЂСѓРµРј pp РїРѕ РЅРѕРІРµР№С€РёРј СЃРѕР±С‹С‚РёСЏРј РІ РёСЃС‚РѕСЂРёРё:
 
 	pp.sort((a, b) => {
 	    const maxTimeA = Math.max(...a.events.map(event => new Date(event.eTime).getTime()));
@@ -107,11 +174,9 @@ SHOP={
 	    return maxTimeB - maxTimeA;
 	});
 
-// dier(pp); return;
+	// console.log("== pp: ",pp); //  dier(pp); // return;
 
-	ohelpc('orders','&#128203; my orders',
-	    mpers(SHOP.ORDER.template_list,{orders:pp, CUR: SHOP_SET.CUR})
-	);
+	ohelpc('orders','&#128203; my orders', mpers(SHOP.ORDER.template_list,{orders:pp, CUR: SHOP_SET.CUR}) );
 
   },
 
@@ -176,7 +241,7 @@ SHOP={
 	    if(!this.countries_opt) {
 		var s = await loadFile(SHOP_SET.countries_txt);
 		var cs = [], co = '';
-		s.split("\n").forEach(l => { if(l.indexOf('|')>=0) cs.push(l.split('|')); }); // KE|..|Кения|Kenya|Kenya
+		s.split("\n").forEach(l => { if(l.indexOf('|')>=0) cs.push(l.split('|')); }); // KE|..|РљРµРЅРёСЏ|Kenya|Kenya
 		cs.forEach(l => co+="<option value='"+l[0]+"'>"+l[3]+"&nbsp;&nbsp;&nbsp;&nbsp;"+l[1]+"</option>" );
 		this.countries = cs;
 		this.countries_opt = co;
@@ -184,22 +249,43 @@ SHOP={
 	},
 
 	// Print address_page 'cart_address'
-
 	reload: async function() {
 	    var div = dom('cart_address'); if(!div) return alert('errdiv');
 	    dom(div,ajaxgif);
-	    var r = await SHOP.API('addresses'); if(!r) return SHOP.error('Error events history');
-    	    var R={};
+	    var r = await SHOP.API('addresses');
+	    if(!r) {
+		if(SHOP.API_last.error == 'empty unic') {
+		    await SHOP.unis_check(); // РїРѕР»СѓС‡РёРј unis РµСЃР»Рё РЅРµ Р±С‹Р»Рѕ
+		    var r = await SHOP.API('addresses'); // РїРѕРІС‚РѕСЂРёРј
+		    if(!r) return SHOP.error("===> ADDR.reload() error 2: "+SHOP.API_last.error);
+		}
+
+//		console.error("===> ADDR.reload(): error "+SHOP.API_last.error);
+	// if(!s && SHOP.API_last.error)
+//	alert("Error: "+SHOP.API_last.error);
+
+
+		return SHOP.error('Error events history');
+	    }
+    	    var R={}, check=false;
 	    if(!r) return R;
+
 	    for(var p of r) {
 		if(p._id) p.aid=p._id; // NoDB patch
 		// Fix country, checked
 		var c = SHOP.ADDR.countries.find(x => x[0] === p.Country);
 		p.country = c[1]+'&nbsp;'+c[3];
 		p.def = 1*p.def;
-		p.checked = (p.def ? ' checked' : '');
+		if(p.def || r.length===1) { check=p.aid; p.checked = ' checked'; }
+		else p.checked = '';
 		R[''+p.aid]=p;
 	    }
+
+	    if(check===false) { // РµСЃР»Рё РЅРµ Р·Р°РґР°РЅ Р°РґСЂРµСЃ, С‚Рѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РїРѕСЃР»РµРґРЅРёР№ Р·Р°РїРѕРјРЅРµРЅРЅС‹Р№
+		var last = f_read('shop_last_address');
+		if(R[last]) R[last].checked=' checked';
+	    }
+
 	    SHOP.ADDR.all=R;
 	    dom(div,mpers(SHOP.ADDR.template.addresses,{addresses: Object.values(R)}));
 	},
@@ -231,7 +317,7 @@ SHOP={
 	save: async function(){
 	    console.log('Address save');
 
-	    await SHOP.unis_check(); // получим unis если не было
+	    await SHOP.unis_check(); // РїРѕР»СѓС‡РёРј unis РµСЃР»Рё РЅРµ Р±С‹Р»Рѕ
 
 	    var div = SHOP.ADDR.div();
 	    var ara={}, e=dom('shop_addressForm'); if(!e) return;
@@ -272,6 +358,7 @@ SHOP={
 
     API: async function(action,data) {
 	if(!data) data={};
+	SHOP.API_last={data:data,action:action};
 	data.action = action;
 	data.num = num;
 	data.unic = (typeof(unis)=='undefined' ? false : unis);
@@ -283,11 +370,15 @@ SHOP={
     	    });
     	    if(!response.ok) throw new Error(`HTTP error status: ${response.status}`);
 	    const r = await response.json();
-	    if(r.error || !r.result) return SHOP.error('Error API.'+action+': '+r.error);
+	SHOP.API_last.error=r.error;
+	SHOP.API_last.result=r.result;
+	    if(r.error || typeof(r.result)=='undefined') return SHOP.error('Error API.'+action+': '+r.error);
 	    return r.result;
 	} catch(er) {
 	    return SHOP.error('Error during API call: '+er);
 	}
+    },
+    API_last: {
     },
 
     CART: {},
@@ -295,13 +386,16 @@ SHOP={
 
     size: 210,
 
-    template_cart: `<div class='shop_cart_img'><div class='shop_cart_img1 mv0' onclick='SHOP.myCart()'>&#128722;&nbsp;<span id='shop_cart_n'>{n}</span></div>
-<div id='shop_cur_select' style='border:1px solid #ccc;'>{#CUR}</div>
+/*
+    template_cart: `<div class='shop_cart_img'>
+<div class='shop_cart_img1 mv0' onclick='SHOP.myCart()'>&#128722;&nbsp;<span class='shop_cart_n'>{n}</span></div>
+<div class='shop_cur_select' style='border:1px solid #ccc;'>{#CUR}</div>
 </div>`,
 
     template_orders: `<div class='shop_orders_img mv0' onclick='SHOP.ORDER.list()'>&#128203;</div>`,
+*/
 
-// Список товаров на экране
+// РЎРїРёСЃРѕРє С‚РѕРІР°СЂРѕРІ РЅР° СЌРєСЂР°РЅРµ
     template_items: `<div class='shop_items thmbns'>{for(items):
 
 <ins shop_item='{id}' class='shop_item thmbn' style='width:{size}px'>
@@ -320,7 +414,7 @@ SHOP={
 
 }</div>`,
 
-// Список товаров в корзине
+// РЎРїРёСЃРѕРє С‚РѕРІР°СЂРѕРІ РІ РєРѕСЂР·РёРЅРµ
     template_tab_items: `<table class='shop_tab'>{for(items):
 <tr class='shop_tab_tr' shop_item='{#id}'>
     <td class='shop_tab_img'>
@@ -336,6 +430,7 @@ SHOP={
 }</table>`,
 
  checkout: async function() {
+    console.log("===> checkout()");
     var r={
 	    list: JSON.parse(JSON.stringify(SHOP.CART)),
 	    total: SHOP.cart_calc_total(),
@@ -343,11 +438,14 @@ SHOP={
     };
     var e = dom('cart_address');
     if(e) {
-	var i = e.querySelector("INPUT[type='radio']:checked");
+	var i = e.querySelectorAll("INPUT[type='radio']:checked")[0];
 	if(!i) return salert("Select address!",2000);
 	r.aid = SHOP.ADDR.aid(i);
+	f_save('shop_last_address',r.aid);
     }
+
     var r = await SHOP.API('order',r);
+
     if(!r) return SHOP.error('Server error: checkout');
     ohelpc('shop_pay','Payment',"<div id='polkadot_work'>"+ajaxgif+"</div>");
     LOADS("./DOT.js?"+Math.random(),function(){
@@ -357,10 +455,13 @@ SHOP={
 	DOT.cx.ajax_url = mpers(SHOP_SET.url,{action:'kalatori'});
         DOT.cx.mainjs = "https://site.zymologia.fi/KALATORI-JS/vendor/";
         DOT.cx.currency = SHOP_SET.CUR; // DOT
-	DOT.cx.currences = SHOP_SET.CUR_ALLOWED; // DOT-L USDC USDT
+	DOT.cx.currences = SHOP_SET.CUR_ALLOWED; // DOTL USDC USDT
 	DOT.onpaid = function(json,info) {
-	    dom('polkadot_work',"Tnx a lot!!!");
-	    alert('success payment!');
+	    clean('shop_pay'); // СѓР±РёСЂР°РµРј РѕРєРЅРѕ РїР»Р°С‚РµР¶РЅРѕРіРѕ РїР»Р°РіРёРЅР°
+	    clean('cart_body'); // СѓР±РёСЂР°РµС‚ РѕС‚РєСЂС‹С‚СѓСЋ РєРѕСЂР·РёРЅСѓ
+	    SHOP.CART={}; SHOP.cartChanged(); // РѕС‡РёС‰Р°РµРј РєРѕСЂР·РёРЅСѓ РїРѕРєСѓРїРѕРє РІ СЃРєСЂРёРїС‚Рµ Рё Р±СЂР°СѓР·РµСЂРµ
+	    SHOP.ORDER.list(); // РІС‹РІРѕРґРёРј РѕРєРѕС€РєРѕ РЅР°С€РёС… Р·Р°РєР°Р·РѕРІ
+	    salert('Paid success!',2000); // РІС‹РІРѕРґРёРј РїСЂРёРІРµС‚РІРёРµ
 	},
         DOT.design();
     });
@@ -394,13 +495,14 @@ SHOP={
 
 
   myCart: async function() {
+    console.log("===> myCart()");
     var items=[];
     var total=0;
     var noaddr=1;
 
     for(var item in SHOP.CART) {
 	var ara = SHOP.ITEMS[item];
-	if(!ara) { delete(SHOP.CART[item]); SHOP.cartChanged();	continue; } // ну нет такого товара больше
+	if(!ara) { delete(SHOP.CART[item]); SHOP.cartChanged();	continue; } // РЅСѓ РЅРµС‚ С‚Р°РєРѕРіРѕ С‚РѕРІР°СЂР° Р±РѕР»СЊС€Рµ
 	ara.quantity = SHOP.CART[item];
 	ara.total = SHOP.ceil( ara.price * ara.quantity );
 	total += ara.total;
@@ -440,21 +542,38 @@ SHOP={
 	l=l.split(':');
 	SHOP.CART[l[0]]=1*l[1];
     }
+    SHOP.cartChanged();
  },
 
  cartChanged: function(){
     var o=[]; for(var item in SHOP.CART) { var n=SHOP.CART[item]; if(n) o.push(item+':'+n); }
     f_save('shop_cart',o.join(','));
-    dom('shop_cart_n', SHOP.cart_calc_n() );
-    dom('shop_total', SHOP.cart_calc_total() );
+    dom.class('shop_cart_n', SHOP.cart_calc_n() );
+    // dom('shop_total', SHOP.cart_calc_total() );
  },
 
  init: async function() {
-    unis=f_read('unis');
-    SHOP.cartLoad();
-    SHOP.load();
+    SHOP.unis_init();
+    SHOP.cartLoad(); // Р·Р°РіСЂСѓР·РёС‚СЊ РёР· РїР°РјСЏС‚Рё Р±СЂР°СѓР·РµСЂР° РєРѕСЂР·РёРЅСѓ
+    SHOP.load(); // Р·Р°РіСЂСѓР·РёС‚СЊ РјР°РіР°Р·РёРЅ С‚РѕРІР°СЂРѕРІ
  },
 
+ unis_logout: async function() {
+    f_del('unis');
+    f_del('unis_login');
+    SHOP.unis_init();
+ },
+
+ unis_init: async function() {
+    unis=f_read('unis');
+    unis_login=f_read('unis_login');
+    var l = (unis.indexOf && unis.indexOf('-') && unis_login);
+console.log('logggg: ',l);
+    var e=dom('.unis_login_flag');
+    e.innerHTML=(l ? '&#128100;' : '');
+    if(l) { e.setAttribute('alt','Logged in as: <b>'+h(unis_login)+'</b>'); init_tip(e); }
+    else { e.removeAttribute('tiptitle'); e.removeAttribute('alt'); }
+ },
 
  unis_check: async function() {
     // restore unis
@@ -463,13 +582,86 @@ SHOP={
 	unis = await SHOP.API('unic_create');
         if(!unis) return SHOP.error('Server error: unic_create');
 	f_save('unis',unis);
-	console.log('Unis created: ',r);
+	console.log('Unis created: ',unis);
     }
  },
 
+ unis_login: async function() {
+    unis=f_read('unis');
+    var name='enter_password';
+    var a = await new Promise((resolve) => {
+	if(!dom(name)) ohelpc(name,'Login',`
+<div style='width: 300px; text-align: center;'>
+
+<div style='position:relative;margin-bottom: 15px;'>
+    <span class='input_symb'>&#128100;</span>
+    <input class='input_form' type="text" placeholder="Username" name="username" required>
+</div>
+
+<div style='position:relative;margin-bottom: 15px;'>
+    <span class='input_symb'>&#128274;</span>
+    <input 
+class='input_form' type="password" placeholder="Password" name="password" id="password" required>
+    <div class='mv0' onclick="this.innerHTML=(this.innerHTML=='&#128065;'?'&#128065;&#65039;':'&#128065;'); var e=this.parentNode.querySelector('input');e.setAttribute('type',e.getAttribute('type')=='text'?'password':'text');" style="cursor: pointer; position: absolute; right: 50px; top: 50%; transform: translateY(-50%);">&#128065;</div>
+</div>
+
+<div class='login_email' style='position:relative;margin-bottom: 15px;display:none;'>
+    <span class='input_symb'>&#9993;&#65039;</span>
+    <input class='input_form' type="text" placeholder="contact@email.com" name="email" required>
+</div>
+
+<button type="submit" class="input_btn mv0">Sign In</button>
+<div class='ajax' style='display:none'>`+ajaxgif+`</div>
+<div style='margin-top: 10px;' class="r mv0"><a class='login_forgot' href="#" onclick="alert('РќСѓ Рё РјСѓРґР°Рє, С‡Рѕ')">Forgot Password?</a></div>
+<div style='margin-top: 10px;' class="r mv0">No account? <a href="#" class='login_create' onclick="alert('РќСѓ Рё РјСѓРґР°Рє, С‡Рѕ')">Create</a></div>
+<div style='margin-top: 10px;' class="r mv0"><a href="#" onclick="SHOP.unis_logout(); clean('enter_password');">Logout</a></div>
+</div>
+`);
+	var e=dom(name);
+
+	e.querySelector('button').onclick=function(){ // Login
+	    var a={},q;
+	    q=e.querySelector("input[name='username']"); a.login = q.value;
+	    if(a.login.length<3) { q.style.border='3px solid red'; return; }
+	    q.style.border='1px solid #ccc';
+
+	    q=e.querySelector("input[name='password']"); a.password = q.value;
+	    if(a.password.length<1) { q.style.border='3px solid red'; return; }
+	    q.style.border='1px solid #ccc';
+
+	    if(e.querySelector('.login_email').style.display!='none') {
+		q=e.querySelector("input[name='email']"); a.email = q.value;
+		if(!(/^[^\s@]+@[^\s@]+\.[^\s@\.]+$/).test(a.email)) { q.style.border='3px solid red'; return; }
+		q.style.border='1px solid #ccc';
+	    }
+	    dom(e.querySelector('button')).style.display='none';
+	    dom.on(e.querySelector('.ajax'));
+	    resolve(a);
+	};
+
+	e.querySelector('.login_create').onclick=function(){ // Switch to register form
+	    dom.on(e.querySelector('.login_email'));
+	    dom(e.querySelector('button')).innerHTML='Register';
+	};
+
+	e.querySelector('button').style.display='unset';
+	e.querySelector('.ajax').style.display='none';
+     });
+
+    if(a.email) unis = await SHOP.API('unic_create',a);
+    else unis = await SHOP.API('unic_login',a);
+    if(!unis||unis=='') { salert('Error login/password',500); return SHOP.unis_login(); }
+    clean(name);
+    f_save('unis',unis);
+    if(a.login) f_save('unis_login',a.login);
+    console.log('Login=['+a.login+'] Unis: ',unis);
+    SHOP.unis_init();
+ },
+
+
  load: async function(from,limit) {
 
-    // место магазина
+    // РјРµСЃС‚Рѕ РјР°РіР°Р·РёРЅР°
     var e = dom('shop_place'); if(!e) { document.body.id='shop_place'; e=document.body; } // return SHOP.error('no e');
     // currency
     var l = e.getAttribute('shop_curency'); if(l) SHOP_SET.CUR=l;
@@ -482,39 +674,65 @@ SHOP={
 
     for(var p of r) {
 	if(p._id) p.id=p._id;
-	SHOP.ITEMS[p.id] = p; // запомнить
+	SHOP.ITEMS[p.id] = p; // Р·Р°РїРѕРјРЅРёС‚СЊ
     }
 
     dom(e,"<style>"+SHOP.css+"</style>"
-	+mpers(SHOP.template_cart,{n:SHOP.CART.length,CUR:SHOP_SET.CUR})
-	+mpers(SHOP.template_orders,{n:SHOP.CART.length})
+	// +mpers(SHOP.template_cart,{n:SHOP.CART.length,CUR:SHOP_SET.CUR})
+	// +mpers(SHOP.template_orders,{n:SHOP.CART.length})
 	+mpers(SHOP.template_items,{items:r, CUR:SHOP_SET.CUR, size:SHOP.size})
     );
 
     SHOP.load_curs();
 
-    // количество позиций
-    dom('shop_cart_n', SHOP.cart_calc_n() );
+    // РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕР·РёС†РёР№
+    dom.class('shop_cart_n', SHOP.cart_calc_n() );
  },
 
  load_curs: async function(){
     var C = await loadFile('https://lleo.me/tmp/currences.json');
-    C = JSON.parse(C);
-    var cur={};
-    var o='';
-    for(var c in C.currences) {
-	var img=C.names[c][1]; if(img.length > 5) img="<img src='"+h(img)+"' width='16' height='16'>";
-	cur[c]={
-	    code:c,
-	    value:C.currences[c],
-	    name:C.names[c][0],
-	    img:img
-	};
-	o+=mpers("<option value='{#v.code}'{sel}>{#v.name}</option>",{v:cur[c],sel:(cur[c].code==SHOP_SET.CUR?' selected':'')});
+    C = JSON.parse(C).result;
+    C = {...C,...SHOP_SET.CURS}; // РґРѕР±Р°РІРёС‚СЊ СЃРѕР±СЃС‚РІРµРЅРЅС‹Рµ
+
+    var o='',oli='';
+
+    var allowed = SHOP_SET.CUR_ALLOWED.split(' ');
+    var base = C[SHOP_SET.CUR];
+    if(!base) SHOP.error("Currency "+h(SHOP_SET.CUR)+" not found!");
+    base = 1/base.value;
+
+    for(var c in C) {
+	if(C[c].img) C[c].image = "<img src='"+h(C[c].img)+"' width='16' height='16'>";
+	if( !allowed.includes(c) ) continue;
+	C[c].code = c;
+	C[c].value *= base;
+	C[c].fullname = (C[c].image ? C[c].image : C[c].char)+" "+h(c);
+	// cur[c]={...C.result[c],...{ code: c, value: C.result[c].value*base }};
+	o+=mpers("<option value='{#v.code}'{sel}>{#v.name} {#v.char} </option>",{v:C[c],sel:(C[c].code==SHOP_SET.CUR?' selected':'')});
+	oli+=mpers(`<li><a href="javascript:SHOP.change_currency('{#v.code}')">{v.fullname}</a></li>`,{v:C[c]});
+	// console.log(C[c]);
     }
-    o="<select>"+o+"</select>";
-    // dier(cur);
-    dom('shop_cur_select',o);
+
+// dier(C);
+
+    SHOP.CURS=C;
+
+    dom.class('.shop_cur_select',"<select onchange='SHOP.change_currency()'>"+o+"</select>");
+    dom.class('.CUR_LI',oli);
+    dom.class('.CUR',C[SHOP_SET.CUR].fullname);
+
+ },
+
+ change_currency: function(NM){
+    if(typeof(NM)!='string') NM = window.event.target.value;
+    SHOP_SET.CUR = NM;
+    dom.class('.CUR',SHOP.CURS[NM].fullname);
+
+    document.querySelectorAll('.shop_item').forEach(e=>{
+	var id = e.getAttribute('shop_item');
+	var price = mpers("{.0000:v}",{v:SHOP.ITEMS[id].price / SHOP.CURS[NM].value});
+	e.querySelectorAll('.shop_price').forEach(ee => {ee.innerHTML = price+' '+SHOP.CURS[NM].char} );
+    });
  },
 
  cart_calc_n: function() {

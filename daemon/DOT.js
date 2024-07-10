@@ -129,6 +129,7 @@ SV: {
 	DOT.SV.page_Select();
 
 	DOT.all_submit();
+
     },
 
 
@@ -352,7 +353,7 @@ SV: {
 
 		// Получить payment_account
 		if(DOT.cx.pay_acc.length<10 && newval=='1') {
-		    var json = await DOT.ajax_daemon('init'); // сделать Ajax-запрос к демону
+		    var json = DOT.ajax_daemon('init'); // сделать Ajax-запрос к демону
 		    if(json) {
 			DOT.cx.pay_acc = json.payment_account;
 			document.querySelectorAll('.cx-pay_acc').forEach(e=>{e.innerHTML=DOT.cx.pay_acc});
@@ -530,9 +531,9 @@ opencart3_init: function(cx) {
     DOT.design();
 },
 
-opencart3_submit: async function() {
+opencart3_submit: function() {
     // Array.from(DOT.dom('form-polkadot').elements).forEach((e) => { const { name,value } = e; DOT.cx[name]=value; });
-    return await DOT.all_submit();
+    return DOT.all_submit();
 },
 
 onterms: function(x) {},
@@ -595,7 +596,7 @@ presta_init: function(cx) {
     // перехатываем только нашу FORM.onsubmit
     var e=document.querySelector('FORM[action*="'+cx.module_name+'"]');
     if(!e) return DOT.error("Prestashop DOT plugin: Design error!");
-    e.onsubmit = async function(x) { return await DOT.all_submit(); };
+    e.onsubmit=function(x) { DOT.all_submit(); return false; };
 
     DOT.onterms=function(x) {
 	var w=DOT.dom("conditions_to_approve[terms-and-conditions]");
@@ -874,7 +875,7 @@ daemon_get_info: async function() {
     console.log("Get Currences /status = "+DOT.cx.status_url);
     var j;
     try {
-	j = await DOT.AJAX( DOT.cx.status_url );
+	j = DOT.AJAX( DOT.cx.status_url );
 	if(j.error) DOT.huemoe("huemoe");
     } catch(er) {
 	return DOT.error("Can't connect daemon: "+DOT.cx.status_url
@@ -973,7 +974,7 @@ ajax_process_errors: function(json) {
 },
 
 
-ajax_daemon: async function(info) {
+ajax_daemon: function(info) {
     var N=DOT.nodes[DOT.CUR];
     console.debug('ajax_daemon('+info+')');
     if(!DOT.cx.total || !N.total_planks) return DOT.error('DOT plugin error 0801: empty total');
@@ -993,7 +994,7 @@ ajax_daemon: async function(info) {
     var url = DOT.cx.order_url.replace('@',DOT.CUR); // /v2/order/*
 
     if( DOT.flag.end ) return false;
-    var j = await DOT.AJAX( url, data, DOT.ajax_headers );
+    var j = DOT.AJAX( url, data, DOT.ajax_headers );
     if( DOT.flag.end ) return false;
     var json = DOT.ajax_process_errors(j);
     if(!json) {
@@ -1030,7 +1031,7 @@ waitManual: {
 		    return; // если нету платежного аккаунта или не выбран свой
 		}
 		// console.log("waitManual!");
-		var json = await DOT.ajax_daemon('waitManual'); // сделать Ajax-запрос к демону
+		var json = DOT.ajax_daemon('waitManual'); // сделать Ajax-запрос к демону
 		if(json && json.ans == 'paid' ) {
 		    DOT.flag.end = 1; // Всё, закончили
 		    console.debug("[!] waitManual: paid!");
@@ -1060,7 +1061,7 @@ waitDaemon: {
 
 		if( DOT.flag.end ) return DOT.waitDaemon.stop();
 
-		var json = await DOT.ajax_daemon('waitDaemonInterval'); // сделать Ajax-запрос к демону
+		var json = DOT.ajax_daemon('waitDaemonInterval'); // сделать Ajax-запрос к демону
 		if(json && json.ans == 'paid' ) {
 		    DOT.flag.end = 1; // Всё, закончили
 		    console.debug("[!] waitDaemon: paid!");
@@ -1082,7 +1083,7 @@ waitDaemon: {
     },
 },
 
-all_submit: async function(y) {
+all_submit: function(y) {
     console.debug('all_submit('+(y===undefined?'':y)+')');
     if(!y) {
 	if(!DOT.cx.my_acc) return DOT.error('Account not selected, return');
@@ -1092,7 +1093,7 @@ all_submit: async function(y) {
 
     DOT.do_button_off();
 
-    var json = await DOT.ajax_daemon('all_submit'); // сделать Ajax-запрос к демону
+    var json = DOT.ajax_daemon('all_submit'); // сделать Ajax-запрос к демону
     if(json === false) return false;
 
     // Paid
@@ -1100,7 +1101,7 @@ all_submit: async function(y) {
         DOT.flag.end = 1; // Всё, закончили
 	console.debug("[ !!!! ] paid!");
 	DOT.onpaid(json,'all_submit');
-	return false; // for web false
+	return true;
     }
 
     // Waiting
@@ -1113,7 +1114,7 @@ all_submit: async function(y) {
 	}
 	console.log("Transfer "+DOT.indot( DOT.nodes[DOT.CUR].total_planks, 1)+"\nFrom: "+DOT.cx.my_acc+"\nTo: "+DOT.cx.pay_acc);
 	DOT.payWithPolkadot(DOT.cx.my_acc, DOT.nodes[DOT.CUR].total_planks, DOT.cx.pay_acc);
-	return false; // for web false
+	return true;
     }
 
     return false;
@@ -1176,8 +1177,7 @@ progress: {
     },
 },
 
-/*
-    AJAXold: function(url,data,headers) {
+    AJAX: function(url,data,headers) {
 	if(!headers) headers={};
     	headers["Content-Type"] = "application/json";
     	headers["X-Requested-With"] = "XMLHttpRequest";
@@ -1200,57 +1200,6 @@ progress: {
 	json.http_code_dot = xhr.status;
 	return json;
     },
-*/
-
-
-
-    AJAX: async function(url,data,headers) {
-        try {
-            const response = await fetch(url, {
-                method: (data?"POST":"GET"),
-                body: data, // JSON.stringify(data),
-            });
-            if(!response.ok) throw new Error(`Error ajax: ${response.status}`);
-
-// console.log("////////////// AJAX:",response);
-
-        var s0 = await response.text();
-	s0 = ''+s0;
-	s=s0.replace(/^\s+/g,'').replace(/\s+$/g,'');
-        var w=s.split('{'); // }
-	if(w.length>1 && w[0]!='') {
-	    DOT.Talert("PHP WARNING: "+DOT.h(w[0]));
-	    s=s.substring(w[0].length);
-	}
-	var json;
-        try { json=JSON.parse(s); } catch(e) {
-	    json=JSON.stringify({error:"Error parse JSON",original:''+s0});
-	}
-	json.http_code_dot = response.status;
-	return json;
-
-
-        } catch(er) {
-            return SHOP.error('Error AJAX: '+er);
-        }
-    },
-//    API_last: {    },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     LOAD: async function(url) {
         const r = await fetch(url,{ method:'GET'/*,mode:'cors',credentials:'include'*/});

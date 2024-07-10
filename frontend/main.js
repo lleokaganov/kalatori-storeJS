@@ -593,7 +593,7 @@ f5_read=l_read=function(k){
     catch(e) { return err_store(e,arguments.callee.name); }
 };
 
-l_del=function(k){
+f_del=l_del=function(k){
     try { return window.localStorage&&window.localStorage.removeItem?window.localStorage.removeItem(k):false; } catch(e) { return err_store(e,arguments.callee.name); }
 };
 
@@ -1763,13 +1763,15 @@ onMoveObject=function(elem,fn,fntest) { elem=dom(elem);
 // новые функции DOM чтоб не стыдно было за быдлоимена
 
 dom=function(e,text){
-    if(typeof(e)!='object') e=document.getElementById(e);
-    if(text==undefined) return e;
+    if(text==undefined) return typeof(e)=='object' ? e : (e.indexOf('.')===0 ? document.querySelectorAll(e)[0] : document.getElementById(e) );
     dom.s(e,text);
 };
 
 dom.s=function(e,text) {
-    if(typeof(e)!='object') e=dom(e); if(!e) return '';
+    if(typeof(e)!='object') {
+	if(e.indexOf && e.indexOf('.')===0) return document.querySelectorAll(e).forEach(l=>l.innerHTML=text);
+	e=dom(e);
+    } if(!e) return '';
     if(text==undefined) return ( e.value!=undefined ? e.value : e.innerHTML );
     if(e.value!=undefined) e.value=text;
     else { if(e.innerHTML!=undefined) e.innerHTML=text; init_tip(e); }
@@ -1782,6 +1784,8 @@ dom.add1=function(e,s,ara) { newdiv(s,ara,dom(e),'first'); };
 dom.on=function(e){ if(e=dom(e)) e.style.display='block'; };
 
 dom.off=function(e){ if(e=dom(e)) { e.style.display='none'; if(e.id!='tip') dom.off('tip'); } };
+
+dom.class=function(e,text) { document.querySelectorAll( e.indexOf('.')===0?e:'.'+e ).forEach(l=>l.innerHTML=text) };
 
 // old
 idd=zabil=dom; vzyal=dom.s; zakryl=dom.off; otkryl=dom.on;
@@ -1836,16 +1840,23 @@ mpersf=async function(file,ar){
     return mpers(MPERS_TEMPLATES[file],ar);
 };
 
-mpers=function(s,ar){
+mpers=function(s,ar,del){ if(del==undefined) del=true;
     var stop=1000,s0=false,c;
     while(--stop && s0!=s && (c=mpers.find(s)) ) {
-	x=mpers.do(ar, c.substring(1,c.length-1) );
-	if(x!==false) { s0=s; s=s.replace(c,x); }
+	s0=s;
+	var c0=c.substring(1,c.length-1)
+	x=mpers.do(ar, c0, del);
+	if(x!==false) s=s.replace(c,x);
+	else {
+	    var c1=mpers(c0,ar,del);
+	    if(c1!=c0) s=s.replace(c0,c1);
+	}
     }
     return s;
 };
 
 mpers.ar=function(ar,name){
+ try {
     var v = ar;
     if(name=='') return ar;
     name.split('.').forEach(n => {
@@ -1853,15 +1864,16 @@ mpers.ar=function(ar,name){
 	v = v[n];
     });
     return v;
+ } catch(er) { return undefined; }
 },
 
-mpers.do=function(ar,s) {
+mpers.do=function(ar,s,del) {
     var m,v,x='',X;
 
     // Простые переменные {name}, {#name}
     if(null !== (m=s.match(/^(\#|)([0-9a-zA-Z_\.]+)$/)) ) {
 	var [,mod,name] = m;
-	if((v=mpers.ar(ar,name))===undefined) return '';
+	if((v=mpers.ar(ar,name))===undefined) return (del ? '' : '{'+s+'}');
 	return (mod=='#' ? h(v) : v);
     }
 
@@ -1873,13 +1885,15 @@ mpers.do=function(ar,s) {
 	if(opt=='if') return (1*v ? value : '');
 
 	if(opt=='for') {
-	    try { v.forEach((l,i)=> x+=mpers(value,{...{i:i}, ...ar, ...l}) ); } catch(e){
-    console.error('mpers '+e+'\nfor('+name+'){\n'+value+'\n}');
-    console.error('v('+typeof(v)+')=');
-    console.error(v);
-    console.error('-------- ar:');
-    console.error(ar);
-}
+	    try {
+		v.forEach((item,i)=> { x+=mpers( value ,{...{i:i,item:item}, ...ar, ...item}); } );
+	    } catch(e) {
+	        console.error('mpers '+e+'\nfor('+name+'){\n'+value+'\n}');
+	        console.error('v('+typeof(v)+')=');
+	        console.error(v);
+	        console.error('-------- ar:');
+	        console.error(ar);
+	    }
 	    return x;
 	}
 
